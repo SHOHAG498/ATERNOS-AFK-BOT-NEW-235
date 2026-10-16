@@ -13,8 +13,8 @@ app.listen(PORT, () => {
 });
 
 const serverOptions = {
-  host: 'SRSHOHAG27.aternos.me',
-  port: 19132,
+  host: 'srbedrock.falixsrv.me',
+  port: 29382,
   username: 'AFK_Bot',
   offline: true,
   skipPing: true,             // Aternos-এর ডিসকভারি পিং বাইপাস করবে
