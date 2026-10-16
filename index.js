@@ -11,8 +11,8 @@ http.createServer((req, res) => {
 });
 
 // ২. FalixNodes সার্ভারের তথ্য
-const SERVER_HOST = process.env.SERVER_HOST || 'your-falix-ip.falixsrv.me';
-const SERVER_PORT = parseInt(process.env.SERVER_PORT || '19132');
+const SERVER_HOST = process.env.SERVER_HOST || 'srbedrock.falixsrv.me';
+const SERVER_PORT = parseInt(process.env.SERVER_PORT || '29382');
 const BOT_NAME = process.env.BOT_NAME || 'AFK_Bot_247';
 
 let bot = null;
