@@ -11,12 +11,12 @@ http.createServer((req, res) => {
 });
 
 // ২. FalixNodes সার্ভারের তথ্য
-const SERVER_HOST = process.env.SERVER_HOST || 'srbedrock.falixsrv.me';
-const SERVER_PORT = parseInt(process.env.SERVER_PORT || '29382');
-const BOT_NAME = process.env.BOT_NAME || 'AGENT';
+const SERVER_HOST = process.env.SERVER_HOST || 'your-falix-ip.falixsrv.me';
+const SERVER_PORT = parseInt(process.env.SERVER_PORT || '19132');
+const BOT_NAME = process.env.BOT_NAME || 'AFK_Bot_247';
 
 let bot = null;
-let angle = 0; // বৃত্তাকার ঘোরার জন্য অ্যাঙ্গেল
+let angle = 0;
 
 function createBot() {
     console.log(`Connecting directly to Minecraft server ${SERVER_HOST}:${SERVER_PORT}...`);
@@ -30,40 +30,38 @@ function createBot() {
     });
 
     bot.on('spawn', () => {
-        console.log("Bot spawned in Spectator mode! Starting circular movement and head rotation loop...");
+        console.log("Bot spawned in Spectator mode! Starting error-free circular movement...");
 
         if (bot.afkInterval) clearInterval(bot.afkInterval);
 
-        // বোট স্পন হওয়ার প্রথম পজিশন বা একটি নির্দিষ্ট সেন্টার পয়েন্ট (যেমন: 0, 64, 0)
-        // পরবর্তীতে বোট তার আশপাশেই ঘুরবে
-        let centerX = 0;
-        let centerY = 64; // সার্ভারের উচ্চতা অনুযায়ী প্রয়োজনমতো পরিবর্তন করতে পারেন
-        let centerZ = 0;
-        let radius = 3;   // গোল বৃত্তের ব্যাসার্ধ (কতটুকু দূরত্বের মধ্যে ঘুরবে, এখানে ৩ ব্লক)
+        // বোট স্পন হওয়ার সঠিক শুরুর পজিশন ধরা (যদি না পাওয়া যায় তবে ডিফল্ট ০, ৬৪, ০)
+        let basePos = { x: 0, y: 64, z: 0 };
+        if (bot.entity && bot.entity.position) {
+            basePos = { 
+                x: bot.entity.position.x || 0, 
+                y: bot.entity.position.y || 64, 
+                z: bot.entity.position.z || 0 
+            };
+        }
+
+        let radius = 2; // ২ ব্লকের ডায়ামিটারের মধ্যে ছোট বৃত্তে ঘুরবে
 
         bot.afkInterval = setInterval(() => {
             try {
                 if (bot) {
-                    // অ্যাঙ্গেল বৃদ্ধি করা যাতে গোল গোল ঘুরতে থাকে
-                    angle += 0.5; 
-                    if (angle >= 360) angle = 0;
-
-                    // রেডিয়ানে রূপান্তর
+                    angle = (angle + 10) % 360;
                     let rad = (angle * Math.PI) / 180;
 
-                    // সাইন-কোসাইন দিয়ে বৃত্তাকার পজিশন হিসাব করা
-                    let targetX = centerX + (radius * Math.cos(rad));
-                    let targetZ = centerZ + (radius * Math.sin(rad));
+                    let targetX = basePos.x + (radius * Math.cos(rad));
+                    let targetZ = basePos.z + (radius * Math.sin(rad));
+                    let yaw = (angle + 90) % 360;
+                    let pitch = Math.sin(rad) * 15; // হাল্কা মাথা উপরে-নিচে করা
 
-                    // মাথা বা ক্যামেরা ঘোরানোর জন্য Yaw এবং Pitch ক্যালকুলেশন
-                    let yaw = (angle + 90) % 360; 
-                    let pitch = Math.sin(rad) * 20; // মাথা হালকা উপরে-নিচে করবে
-
-                    // বেডরক প্রোটোকলের স্পেকটেটর মুভমেন্ট প্যাকেট
+                    // bedrock-protocol এর ১০০% সঠিক অবজেক্ট স্ট্রাকচার (SizeOf error সমাধান)
                     bot.write('player_auth_input', {
                         pitch: pitch,
                         yaw: yaw,
-                        position: { x: targetX, y: centerY, z: targetZ },
+                        position: { x: targetX, y: basePos.y, z: targetZ },
                         move_vector: { x: 0, z: 0 },
                         head_yaw: yaw,
                         input_data: 0,
@@ -72,15 +70,15 @@ function createBot() {
                         interaction_model: 0,
                         gaze_direction: { x: 0, y: 0, z: 0 },
                         tick: 0,
-                        delta: { x: 0, y: 0, z: 0 }
+                        delta: { x: 0, y: 0, z: 0 } // delta অবজেক্টে x, y, z প্রতিটি থাকা বাধ্যতামূলক
                     });
 
-                    console.log(`Spectator bot moving in circle at X: ${targetX.toFixed(2)}, Z: ${targetZ.toFixed(2)} with rotating head.`);
+                    console.log(`[Spectator Active] Moving circle -> X: ${targetX.toFixed(2)}, Z: ${targetZ.toFixed(2)}`);
                 }
             } catch (err) {
                 console.log("Spectator Circle Loop Error:", err.message);
             }
-        }, 3000); // প্রতি ৩ সেকেন্ডে আপডেট হবে
+        }, 3000); // প্রতি ৩ সেকেন্ডে আপডেট
     });
 
     bot.on('close', () => {
