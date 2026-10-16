@@ -1,21 +1,11 @@
 {
-  "name": "minecraft-afk-bot",
+  "name": "bedrock-afk-bot",
   "version": "1.0.0",
-  "description": "Minecraft Bedrock AFK Bot for Aternos Server",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
-  "keywords": [
-    "minecraft",
-    "bedrock",
-    "afk-bot",
-    "koyeb"
-  ],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "bedrock-protocol": "^3.30.0",
-    "express": "^4.19.2"
+    "bedrock-protocol": "^3.0.0"
   }
 }
