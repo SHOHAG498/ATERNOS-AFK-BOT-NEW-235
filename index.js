@@ -1,12 +1,11 @@
 const bedrock = require('bedrock-protocol');
 const express = require('express');
 
-// Koyeb-এ সার্ভিস সচল রাখার জন্য এক্সপ্রেস ওয়েব সার্ভার
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 10000;
 
 app.get('/', (req, res) => {
-  res.send('AFK Bot is alive!');
+  res.send('AFK Bot is Online!');
 });
 
 app.listen(PORT, () => {
@@ -17,11 +16,13 @@ const serverOptions = {
   host: 'SRSHOHAG27.aternos.me',
   port: 19132,
   username: 'AFK_Bot',
-  offline: true
+  offline: true,
+  skipPing: true,             // Aternos-এর ডিসকভারি পিং বাইপাস করবে
+  connectTimeout: 60000       // কানেকশন টাইমআউট ৬০ সেকেন্ডে উন্নীত করা হলো
 };
 
 function createBot() {
-  console.log('Connecting to Aternos server...');
+  console.log('Connecting directly to Aternos server...');
   const client = bedrock.createClient(serverOptions);
 
   client.on('join', () => {
@@ -29,9 +30,9 @@ function createBot() {
   });
 
   client.on('spawn', () => {
-    console.log('Bot spawned in the world. Starting AFK movement loop...');
+    console.log('Bot spawned in the world! Starting AFK loop...');
     
-    // প্রতি ২০ সেকেন্ড পর পর মুভমেন্ট পাঠানো যাতে কিক না করে
+    // প্রতি ১৫ সেকেন্ডে ছোট মুভমেন্ট পাঠাবে কিক এড়াতে
     setInterval(() => {
       try {
         client.queue('player_auth_input', {
@@ -47,9 +48,9 @@ function createBot() {
         });
         console.log('Sent movement packet to stay active.');
       } catch (err) {
-        console.log('Movement skipped:', err.message);
+        console.log('Movement packet error:', err.message);
       }
-    }, 60000);
+    }, 15000);
   });
 
   client.on('disconnect', (packet) => {
@@ -58,7 +59,7 @@ function createBot() {
   });
 
   client.on('error', (err) => {
-    console.log('Client error occurred:', err);
+    console.log('Client error:', err.message);
   });
 
   client.on('close', () => {
@@ -75,4 +76,3 @@ function reconnect() {
 }
 
 createBot();
-                     
