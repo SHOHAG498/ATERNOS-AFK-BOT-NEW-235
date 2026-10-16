@@ -11,8 +11,8 @@ http.createServer((req, res) => {
 });
 
 // ২. আপনার সার্ভারের তথ্য
-const SERVER_HOST = process.env.SERVER_HOST || 'your-server-ip.aternos.me'; // আপনার Server IP
-const SERVER_PORT = parseInt(process.env.SERVER_PORT || '19132');          // আপনার Server Port
+const SERVER_HOST = process.env.SERVER_HOST || 'srbedrock.falixsrv.me'; // আপনার Server IP
+const SERVER_PORT = parseInt(process.env.SERVER_PORT || '29382');          // আপনার Server Port
 const BOT_NAME = process.env.BOT_NAME || 'AFK_Bot_247';                     // বোটের নাম
 
 let bot = null;
