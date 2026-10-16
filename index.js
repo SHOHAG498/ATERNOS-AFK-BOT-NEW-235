@@ -1,78 +1,76 @@
 const bedrock = require('bedrock-protocol');
-const express = require('express');
+const http = require('http');
 
-const app = express();
+// ১. Render-এর জন্য মিনিমাল ওয়েব সার্ভার (Port 10000)
 const PORT = process.env.PORT || 10000;
-
-app.get('/', (req, res) => {
-  res.send('AFK Bot is Online!');
+http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('AFK Bot is active and running 24/7!\n');
+}).listen(PORT, () => {
+    console.log(`Web server running on port ${PORT}`);
 });
 
-app.listen(PORT, () => {
-  console.log(`Web server running on port ${PORT}`);
-});
+// ২. আপনার সার্ভারের তথ্য
+const SERVER_HOST = process.env.SERVER_HOST || 'your-server-ip.aternos.me'; // আপনার Server IP
+const SERVER_PORT = parseInt(process.env.SERVER_PORT || '19132');          // আপনার Server Port
+const BOT_NAME = process.env.BOT_NAME || 'AFK_Bot_247';                     // বোটের নাম
 
-const serverOptions = {
-  host: 'srbedrock.falixsrv.me',
-  port: 29382,
-  username: 'AFK_Bot',
-  offline: true,
-  skipPing: true,             // Aternos-এর ডিসকভারি পিং বাইপাস করবে
-  connectTimeout: 60000       // কানেকশন টাইমআউট ৬০ সেকেন্ডে উন্নীত করা হলো
-};
+let bot = null;
 
 function createBot() {
-  console.log('Connecting directly to Aternos server...');
-  const client = bedrock.createClient(serverOptions);
+    console.log(`Connecting directly to Minecraft server ${SERVER_HOST}:${SERVER_PORT}...`);
 
-  client.on('join', () => {
-    console.log('Bot successfully joined the server!');
-  });
+    bot = bedrock.createClient({
+        host: SERVER_HOST,
+        port: SERVER_PORT,
+        username: BOT_NAME,
+        offline: true,
+        skipPing: true
+    });
 
-  client.on('spawn', () => {
-    console.log('Bot spawned in the world! Starting AFK loop...');
-    
-    // প্রতি ১৫ সেকেন্ডে ছোট মুভমেন্ট পাঠাবে কিক এড়াতে
-    setInterval(() => {
-      try {
-        client.queue('player_auth_input', {
-          pitch: 0,
-          yaw: Math.random() * 360,
-          position: [0, 0, 0],
-          move_vector: [0.1, 0],
-          head_yaw: 0,
-          input_data: 0,
-          input_command: 0,
-          player_epoch: 0,
-          counter: 0
-        });
-        console.log('Sent movement packet to stay active.');
-      } catch (err) {
-        console.log('Movement packet error:', err.message);
-      }
-    }, 15000);
-  });
+    // বোট সফলভাবে গেমে ঢুকলে
+    bot.on('spawn', () => {
+        console.log("Bot successfully spawned in the world! Starting clean AFK loop...");
 
-  client.on('disconnect', (packet) => {
-    console.log('Disconnected from server:', packet);
-    reconnect();
-  });
+        // ক্ষতিকর পজিশন প্যাকেটের বদলে নিরাপদ হাত নাড়ানো (Swing Arm) লুপ
+        if (bot.afkInterval) clearInterval(bot.afkInterval);
 
-  client.on('error', (err) => {
-    console.log('Client error:', err.message);
-  });
+        bot.afkInterval = setInterval(() => {
+            try {
+                if (bot && bot.entityId) {
+                    // অ্যানিমেশন প্যাকেট পাঠানো (Swing Arm)
+                    bot.write('animate', {
+                        action_id: 1,
+                        runtime_entity_id: bot.entityId
+                    });
+                    console.log("Sent AFK keep-alive packet (Swing Arm).");
+                }
+            } catch (err) {
+                console.log("AFK Loop error:", err.message);
+            }
+        }, 20000); // প্রতি ২০ সেকেন্ডে একবার
+    });
 
-  client.on('close', () => {
-    console.log('Connection closed.');
-    reconnect();
-  });
+    // ডিসকানেক্ট বা এরর হলে স্বয়ংক্রিয়ভাবে আবার রিকানেক্ট করবে
+    bot.on('close', () => {
+        console.log("Connection closed. Reconnecting in 10 seconds...");
+        cleanupAndReconnect();
+    });
+
+    bot.on('error', (err) => {
+        console.log("Client error:", err.message);
+        cleanupAndReconnect();
+    });
 }
 
-function reconnect() {
-  console.log('Reconnecting in 10 seconds...');
-  setTimeout(() => {
-    createBot();
-  }, 10000);
+function cleanupAndReconnect() {
+    if (bot) {
+        if (bot.afkInterval) clearInterval(bot.afkInterval);
+        bot.removeAllListeners();
+        bot = null;
+    }
+    setTimeout(createBot, 10000); // ১০ সেকেন্ড পর আবার কানেক্ট করবে
 }
 
+// বোট চালু করুন
 createBot();
